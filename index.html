@@ -37,8 +37,14 @@ button {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle at center, #ffd54a 35%, #b91c1c 70%);
+  background: radial-gradient(circle at center, #c7a46a 35%, #3b2f1e 70%);
   position: relative;
+  box-shadow: 0 0 40px #111;
+  transition: 0.2s;
+}
+
+.armored {
+  background: radial-gradient(circle at center, #ffd54a 35%, #b91c1c 70%);
   box-shadow: 0 0 40px #dc2626;
 }
 
@@ -65,6 +71,11 @@ button {
   border-radius: 50%;
   background: cyan;
   box-shadow: 0 0 20px cyan;
+  display: none;
+}
+
+#hero.armored #reactor {
+  display: block;
 }
 
 #hero:active {
@@ -93,30 +104,69 @@ button {
   <div id="reactor"></div>
 </div>
 
-<button onclick="upgradeTap()">Усилить тап (+1) — 200</button>
+<button id="tapBtn" onclick="upgradeTap()"></button>
 <button onclick="upgradeIncome()">Базовый доход +1 — 185</button>
 
 <div class="section">
   <h3>Магазин костюма</h3>
-  <button>🔩 Шлем — Куплено</button>
-  <button>🦾 Руки — Куплено</button>
-  <button>🦿 Ноги — Куплено</button>
+  <button onclick="buyHelmet()">🔩 Шлем — <span id="helmet">Не куплено</span></button>
+  <button onclick="buyArms()">🦾 Руки — <span id="arms">Не куплено</span></button>
+  <button onclick="buyLegs()">🦿 Ноги — <span id="legs">Не куплено</span></button>
 </div>
 
 <script>
-let energy = 0;
-let tapPower = 1;
-let income = 1;
+let energy = Number(localStorage.energy) || 0;
+let tapPower = Number(localStorage.tapPower) || 1;
+let income = Number(localStorage.income) || 1;
+
+let tapCost = Number(localStorage.tapCost) || 50;
+
+let helmet = localStorage.helmet === "true";
+let arms = localStorage.arms === "true";
+let legs = localStorage.legs === "true";
+
+const energyEl = document.getElementById("energy");
+const incomeEl = document.getElementById("income");
+const tapBtn = document.getElementById("tapBtn");
+const hero = document.getElementById("hero");
+
+function save() {
+  localStorage.energy = energy;
+  localStorage.tapPower = tapPower;
+  localStorage.income = income;
+  localStorage.tapCost = tapCost;
+  localStorage.helmet = helmet;
+  localStorage.arms = arms;
+  localStorage.legs = legs;
+}
+
+function updateUI() {
+  energyEl.textContent = energy;
+  incomeEl.textContent = income;
+  tapBtn.textContent = `Усилить тап (+1) — ${tapCost}`;
+
+  document.getElementById("helmet").textContent = helmet ? "Куплено" : "100";
+  document.getElementById("arms").textContent = arms ? "Куплено" : "150";
+  document.getElementById("legs").textContent = legs ? "Куплено" : "200";
+
+  if (helmet && arms && legs) {
+    hero.classList.add("armored");
+  }
+
+  save();
+}
 
 function tap() {
   energy += tapPower;
-  document.getElementById("energy").textContent = energy;
+  updateUI();
 }
 
 function upgradeTap() {
-  if (energy >= 200) {
-    energy -= 200;
+  if (energy >= tapCost) {
+    energy -= tapCost;
     tapPower++;
+    tapCost += 10;
+    updateUI();
   }
 }
 
@@ -124,15 +174,44 @@ function upgradeIncome() {
   if (energy >= 185) {
     energy -= 185;
     income++;
+    updateUI();
+  }
+}
+
+function buyHelmet() {
+  if (!helmet && energy >= 100) {
+    energy -= 100;
+    helmet = true;
+    income += 1;
+    updateUI();
+  }
+}
+
+function buyArms() {
+  if (!arms && energy >= 150) {
+    energy -= 150;
+    arms = true;
+    tapPower += 2;
+    updateUI();
+  }
+}
+
+function buyLegs() {
+  if (!legs && energy >= 200) {
+    energy -= 200;
+    legs = true;
+    income += 2;
+    updateUI();
   }
 }
 
 setInterval(() => {
   energy += income;
-  document.getElementById("energy").textContent = energy;
-  document.getElementById("income").textContent = income;
+  updateUI();
 }, 1000);
+
+updateUI();
 </script>
 
 </body>
-</html>
+  </html>
