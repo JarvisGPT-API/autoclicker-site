@@ -1,95 +1,215 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>AutoClicker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iron Evolution Clicker</title>
+
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
+      background: linear-gradient(180deg, #0b1220, #020617);
+      color: white;
       text-align: center;
     }
+
     header {
-      background: #020617;
-      padding: 20px;
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: rgba(2,6,23,0.6);
+      position: sticky;
+      top: 0;
     }
-    main {
-      padding: 60px 20px;
-    }
-    h1 {
-      font-size: 40px;
-    }
-    p {
-      font-size: 18px;
-      max-width: 600px;
-      margin: 20px auto;
-    }
+
     button {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
       border: none;
-      color: white;
+      border-radius: 14px;
       padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 8px;
+      color: white;
+      font-size: 15px;
       cursor: pointer;
     }
-    button:hover {
-      background: #1d4ed8;
+
+    .hero {
+      width: 220px;
+      height: 220px;
+      margin: 30px auto;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fde68a, #92400e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 64px;
+      user-select: none;
     }
-    footer {
-      margin-top: 80px;
+
+    .iron {
+      background: radial-gradient(circle, #facc15, #b91c1c 60%, #7f1d1d);
+    }
+
+    .stats {
+      font-size: 26px;
+      font-weight: bold;
+    }
+
+    .income {
       font-size: 14px;
-      color: #94a3b8;
+      opacity: 0.7;
+    }
+
+    .panel {
+      max-width: 360px;
+      margin: 10px auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .shop {
+      background: rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 20px;
     }
   </style>
 </head>
+
 <body>
 
 <header>
-  <strong>AutoClicker</strong>
-  <button onclick="toggleLang()">RU / EN</button>
+  <div>Iron Evolution</div>
+  <button id="langBtn">RU / EN</button>
 </header>
 
-<main>
-  <h1 id="title">Простой автокликер</h1>
-  <p id="desc">
-    Бесплатный автокликер для автоматического нажатия мыши.
-    Подходит для игр и рутинных задач.
-  </p>
-  <button id="download">Скачать</button>
-</main>
+<div class="stats" id="scoreText"></div>
+<div class="income" id="incomeText"></div>
 
-<footer>
-  © 2026 AutoClicker
-</footer>
+<div class="hero" id="hero">🙂</div>
+
+<div class="panel">
+  <button id="upgradeClickBtn"></button>
+  <button id="upgradeIncomeBtn"></button>
+</div>
+
+<div class="shop">
+  <h3 id="shopTitle">Магазин костюма</h3>
+  <div class="panel">
+    <button id="helmetBtn"></button>
+    <button id="reactorBtn"></button>
+    <button id="bootsBtn"></button>
+  </div>
+</div>
+
+<audio id="clickSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
 
 <script>
-  let lang = "ru";
-  const text = {
-    ru: {
-      title: "Простой автокликер",
-      desc: "Бесплатный автокликер для автоматического нажатия мыши. Подходит для игр и рутинных задач.",
-      btn: "Скачать"
-    },
-    en: {
-      title: "Simple Auto Clicker",
-      desc: "A free auto clicker for automatic mouse clicking. Useful for games and repetitive tasks.",
-      btn: "Download"
+  let score = +localStorage.getItem('score') || 0;
+  let perClick = +localStorage.getItem('perClick') || 1;
+  let income = +localStorage.getItem('income') || 0;
+  let parts = JSON.parse(localStorage.getItem('parts') || '{}');
+  let lang = localStorage.getItem('lang') || 'ru';
+
+  const hero = document.getElementById('hero');
+  const scoreText = document.getElementById('scoreText');
+  const incomeText = document.getElementById('incomeText');
+  const clickSound = document.getElementById('clickSound');
+
+  const shopItems = {
+    helmet: { cost: 50, income: 1, ru: 'Шлем', en: 'Helmet' },
+    reactor: { cost: 150, income: 3, ru: 'Реактор', en: 'Reactor' },
+    boots: { cost: 300, income: 5, ru: 'Ботинки', en: 'Boots' }
+  };
+
+  function save() {
+    localStorage.setItem('score', score);
+    localStorage.setItem('perClick', perClick);
+    localStorage.setItem('income', income);
+    localStorage.setItem('parts', JSON.stringify(parts));
+    localStorage.setItem('lang', lang);
+  }
+
+  function updateUI() {
+    scoreText.textContent = lang === 'ru' ? `Энергия: ${score}` : `Energy: ${score}`;
+    incomeText.textContent = lang === 'ru' ? `Доход: ${income}/сек` : `Income: ${income}/sec`;
+
+    upgradeClickBtn.textContent =
+      lang === 'ru'
+        ? `Усилить тап (+1) — ${perClick * 10}`
+        : `Upgrade tap (+1) — ${perClick * 10}`;
+
+    upgradeIncomeBtn.textContent =
+      lang === 'ru'
+        ? `Базовый доход +1 — ${income * 15 + 20}`
+        : `Base income +1 — ${income * 15 + 20}`;
+
+    for (const id in shopItems) {
+      const btn = document.getElementById(id + 'Btn');
+      const item = shopItems[id];
+      btn.textContent = parts[id]
+        ? (lang === 'ru' ? 'Куплено' : 'Bought')
+        : `${lang === 'ru' ? item.ru : item.en} +${item.income} — ${item.cost}`;
+      btn.disabled = !!parts[id];
+    }
+  }
+
+  hero.onclick = () => {
+    score += perClick;
+    clickSound.currentTime = 0;
+    clickSound.play();
+    save();
+    updateUI();
+  };
+
+  upgradeClickBtn.onclick = () => {
+    const cost = perClick * 10;
+    if (score >= cost) {
+      score -= cost;
+      perClick++;
+      save();
+      updateUI();
     }
   };
 
-  function toggleLang() {
-    lang = lang === "ru" ? "en" : "ru";
-    document.getElementById("title").innerText = text[lang].title;
-    document.getElementById("desc").innerText = text[lang].desc;
-    document.getElementById("download").innerText = text[lang].btn;
+  upgradeIncomeBtn.onclick = () => {
+    const cost = income * 15 + 20;
+    if (score >= cost) {
+      score -= cost;
+      income++;
+      save();
+      updateUI();
+    }
+  };
+
+  for (const id in shopItems) {
+    document.getElementById(id + 'Btn').onclick = () => {
+      const item = shopItems[id];
+      if (!parts[id] && score >= item.cost) {
+        score -= item.cost;
+        income += item.income;
+        parts[id] = true;
+        hero.classList.add('iron');
+        save();
+        updateUI();
+      }
+    };
   }
+
+  langBtn.onclick = () => {
+    lang = lang === 'ru' ? 'en' : 'ru';
+    save();
+    updateUI();
+  };
+
+  setInterval(() => {
+    score += income;
+    save();
+    updateUI();
+  }, 1000);
+
+  updateUI();
 </script>
 
 </body>
