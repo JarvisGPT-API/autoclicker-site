@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>AutoClicker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      text-align: center;
+    }
+    header {
+      background: #020617;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    main {
+      padding: 60px 20px;
+    }
+    h1 {
+      font-size: 40px;
+    }
+    p {
+      font-size: 18px;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    button {
+      background: #2563eb;
+      border: none;
+      color: white;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    footer {
+      margin-top: 80px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <strong>AutoClicker</strong>
+  <button onclick="toggleLang()">RU / EN</button>
+</header>
+
+<main>
+  <h1 id="title">Простой автокликер</h1>
+  <p id="desc">
+    Бесплатный автокликер для автоматического нажатия мыши.
+    Подходит для игр и рутинных задач.
+  </p>
+  <button id="download">Скачать</button>
+</main>
+
+<footer>
+  © 2026 AutoClicker
+</footer>
+
+<script>
+  let lang = "ru";
+  const text = {
+    ru: {
+      title: "Простой автокликер",
+      desc: "Бесплатный автокликер для автоматического нажатия мыши. Подходит для игр и рутинных задач.",
+      btn: "Скачать"
+    },
+    en: {
+      title: "Simple Auto Clicker",
+      desc: "A free auto clicker for automatic mouse clicking. Useful for games and repetitive tasks.",
+      btn: "Download"
+    }
+  };
+
+  function toggleLang() {
+    lang = lang === "ru" ? "en" : "ru";
+    document.getElementById("title").innerText = text[lang].title;
+    document.getElementById("desc").innerText = text[lang].desc;
+    document.getElementById("download").innerText = text[lang].btn;
+  }
+</script>
+
+</body>
+</html>
