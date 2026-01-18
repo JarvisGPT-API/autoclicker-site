@@ -26,75 +26,69 @@ body {
   width: 260px;
   height: 260px;
   margin: 20px auto;
-  border-radius: 50%;
 }
 
-svg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
+svg { position:absolute; inset:0; pointer-events:none; }
 
 .letter {
-  position: absolute;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #2563eb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
-  font-weight: bold;
+  position:absolute;
+  width:56px; height:56px;
+  border-radius:50%;
+  background:#2563eb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  font-weight:bold;
 }
 
 .neon .letter {
-  background: #a855f7;
-  box-shadow: 0 0 15px #a855f7;
+  background:#a855f7;
+  box-shadow:0 0 15px #a855f7;
 }
 
 .letter.active {
-  background: #22c55e;
-  transform: scale(1.15);
+  background:#22c55e;
+  transform:scale(1.15);
 }
 
-#current { font-size: 28px; min-height: 40px; }
+#current { font-size:28px; min-height:40px; }
 
 #words {
-  display: grid;
-  gap: 10px;
-  justify-content: center;
+  display:grid;
+  gap:10px;
+  justify-content:center;
 }
 
-.word { display: flex; gap: 6px; }
+.word { display:flex; gap:6px; }
 
 .cell {
-  width: 34px;
-  height: 40px;
-  border: 2px solid rgba(255,255,255,0.4);
-  border-radius: 6px;
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width:34px; height:40px;
+  border:2px solid rgba(255,255,255,.4);
+  border-radius:6px;
+  font-size:22px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
+.bonus .cell { border-color:#facc15; }
+
 button {
-  margin: 6px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  background: #22c55e;
-  color: white;
-  font-size: 15px;
+  margin:6px;
+  padding:10px 16px;
+  border-radius:10px;
+  border:none;
+  background:#22c55e;
+  color:white;
 }
 
 #shop {
-  display: none;
-  background: rgba(0,0,0,0.8);
-  position: fixed;
-  inset: 0;
-  padding-top: 100px;
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  padding-top:100px;
 }
 </style>
 </head>
@@ -108,11 +102,10 @@ button {
 
 <div id="current"></div>
 
-<div id="circle">
-  <svg id="lines"></svg>
-</div>
+<div id="circle"><svg id="lines"></svg></div>
 
 <button onclick="hint()">💡 Подсказка (5💰)</button>
+<button onclick="shuffleLetters()">🔄 Перемешать</button>
 <button onclick="openShop()">🛒 Магазин</button>
 
 <div id="words"></div>
@@ -125,91 +118,80 @@ button {
 </div>
 
 <script>
-// 🔹 БАЗОВЫЕ УРОВНИ (20)
+// ✅ ТОЛЬКО СЛОВАРНЫЕ СЛОВА
 const baseLevels = [
-  { letters:["К","О","Т"], words:["КОТ","ТОК"] },
-  { letters:["Д","О","М"], words:["ДОМ","МОД"] },
-  { letters:["С","О","К"], words:["СОК","КОС"] },
-  { letters:["Л","Е","С"], words:["ЛЕС","СЕЛ"] },
-  { letters:["М","И","Р"], words:["МИР","РИМ"] },
+  { letters:["К","О","Т"], main:["КОТ"], bonus:["ТОК"] },
+  { letters:["Д","О","М"], main:["ДОМ"], bonus:["МОД"] },
+  { letters:["С","О","К"], main:["СОК"], bonus:["КОС"] },
+  { letters:["Л","Е","С"], main:["ЛЕС"], bonus:[] },
+  { letters:["М","И","Р"], main:["МИР"], bonus:["РИМ"] },
 
-  { letters:["Р","У","К","А"], words:["РУКА","КАР","АРК"] },
-  { letters:["С","Т","О","Л"], words:["СТОЛ","ТОЛ","ЛОТ"] },
-  { letters:["Г","О","Р","А"], words:["ГОРА","РОГ","АРО"] },
-  { letters:["Н","О","Г","А"], words:["НОГА","ГОН","АНО"] },
-  { letters:["Т","Е","Л","О"], words:["ТЕЛО","ЛЕТ","ОЛЕ"] },
-
-  { letters:["М","А","Ш","И","Н","А"], words:["МАШИНА","МИНА","ШАМ"] },
-  { letters:["К","А","М","Е","Н","Ь"], words:["КАМЕНЬ","МЕНА"] },
-  { letters:["С","О","Л","Н","Ц","Е"], words:["СОЛНЦЕ","СОН","ЛЕЦ"] },
-  { letters:["З","В","Е","З","Д","А"], words:["ЗВЕЗДА","ВЕЗ","ДАЗ"] },
-  { letters:["П","Л","А","Н","Е","Т","А"], words:["ПЛАНЕТА","ЛЕН","ТАП"] },
-
-  { letters:["Р","А","К","Е","Т","А"], words:["РАКЕТА","КАРЕТ"] },
-  { letters:["Т","Е","Л","Е","Ф","О","Н"], words:["ТЕЛЕФОН","ФОН"] },
-  { letters:["Э","Н","Е","Р","Г","И","Я"], words:["ЭНЕРГИЯ","ГЕН"] },
-  { letters:["К","О","М","П","Ь","Ю","Т","Е","Р"], words:["КОМПЬЮТЕР","КОМЕТ"] },
-  { letters:["С","Т","А","Н","Ц","И","Я"], words:["СТАНЦИЯ","ЦЕНА"] }
+  { letters:["Р","У","К","А"], main:["РУКА"], bonus:["КАР"] },
+  { letters:["С","Т","О","Л"], main:["СТОЛ"], bonus:[] },
+  { letters:["Г","О","Р","А"], main:["ГОРА"], bonus:["РОГ"] },
+  { letters:["Н","О","Г","А"], main:["НОГА"], bonus:[] },
+  { letters:["Т","Е","Л","О"], main:["ТЕЛО"], bonus:["ЛЕТ"] }
 ];
 
-// 🔁 ДЕЛАЕМ 50 УРОВНЕЙ
-const levels = [];
-while (levels.length < 50) {
-  baseLevels.forEach(l => {
-    if (levels.length < 50)
-      levels.push(JSON.parse(JSON.stringify(l)));
+// 50 уровней
+const levels=[];
+while(levels.length<50){
+  baseLevels.forEach(l=>{
+    if(levels.length<50) levels.push(JSON.parse(JSON.stringify(l)));
   });
 }
 
-let level = +localStorage.level || 0;
-let coins = +localStorage.coins || 0;
-let skin = localStorage.skin || "default";
+let level=+localStorage.level||0;
+let coins=+localStorage.coins||0;
+let skin=localStorage.skin||"default";
 
-let current="", found=[], used=[], points=[], dragging=false;
+let current="",found=[],used=[],points=[],dragging=false;
 
-const circle = document.getElementById("circle");
-const svg = document.getElementById("lines");
-const wordsDiv = document.getElementById("words");
+const circle=document.getElementById("circle");
+const svg=document.getElementById("lines");
+const wordsDiv=document.getElementById("words");
 
-document.getElementById("coins").textContent = coins;
-document.body.className = skin === "neon" ? "neon" : "";
+document.getElementById("coins").textContent=coins;
+document.body.className=skin==="neon"?"neon":"";
 
-function save() {
-  localStorage.level = level;
-  localStorage.coins = coins;
-  localStorage.skin = skin;
+function save(){
+  localStorage.level=level;
+  localStorage.coins=coins;
+  localStorage.skin=skin;
 }
 
-function loadLevel() {
-  if (level >= levels.length) return;
+function loadLevel(){
   circle.querySelectorAll(".letter").forEach(e=>e.remove());
   wordsDiv.innerHTML="";
   svg.innerHTML="";
-  current=""; found=[]; used=[]; points=[];
-  document.getElementById("level").textContent = level+1;
+  current="";found=[];used=[];points=[];
+  document.getElementById("level").textContent=level+1;
 
-  const L = levels[level].letters;
-  const r = 100;
+  const L=levels[level].letters;
+  const r=100;
 
   L.forEach((l,i)=>{
-    const a = 2*Math.PI/L.length*i;
-    const x = 130+r*Math.cos(a)-28;
-    const y = 130+r*Math.sin(a)-28;
-    const d = document.createElement("div");
+    const a=2*Math.PI/L.length*i;
+    const d=document.createElement("div");
     d.className="letter";
     d.textContent=l;
-    d.style.left=x+"px";
-    d.style.top=y+"px";
+    d.style.left=130+r*Math.cos(a)-28+"px";
+    d.style.top =130+r*Math.sin(a)-28+"px";
     circle.appendChild(d);
   });
 
-  levels[level].words.forEach(w=>{
-    const row=document.createElement("div");
-    row.className="word";
-    row.dataset.word=w;
-    for(let i=0;i<w.length;i++) row.appendChild(document.createElement("div")).className="cell";
-    wordsDiv.appendChild(row);
-  });
+  levels[level].main.forEach(w=>addWord(w,false));
+  levels[level].bonus.forEach(w=>addWord(w,true));
+}
+
+function addWord(w,bonus){
+  const row=document.createElement("div");
+  row.className="word"+(bonus?" bonus":"");
+  row.dataset.word=w;
+  row.dataset.bonus=bonus;
+  for(let i=0;i<w.length;i++)
+    row.appendChild(document.createElement("div")).className="cell";
+  wordsDiv.appendChild(row);
 }
 
 circle.onpointerdown=e=>{dragging=true;check(e);}
@@ -220,7 +202,7 @@ function check(e){
   document.querySelectorAll(".letter").forEach(el=>{
     if(used.includes(el))return;
     const r=el.getBoundingClientRect();
-    if(Math.hypot(e.clientX-(r.left+r.width/2), e.clientY-(r.top+r.height/2))<30){
+    if(Math.hypot(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2))<30){
       used.push(el);
       el.classList.add("active");
       current+=el.textContent;
@@ -244,47 +226,51 @@ function draw(){
 
 function reset(){
   document.querySelectorAll(".letter").forEach(l=>l.classList.remove("active"));
-  svg.innerHTML=""; used=[]; points=[]; current="";
+  svg.innerHTML="";used=[];points=[];current="";
   document.getElementById("current").textContent="";
 }
 
 function checkWord(){
-  const words=levels[level].words;
-  if(words.includes(current)&&!found.includes(current)){
-    found.push(current);
-    coins+=current.length;
-    document.getElementById("coins").textContent=coins;
-    save();
-    document.querySelectorAll(".word").forEach(r=>{
-      if(r.dataset.word===current)
-        [...r.children].forEach((c,i)=>c.textContent=current[i]);
-    });
-    if(found.length === words.length){
-      level++;
+  document.querySelectorAll(".word").forEach(r=>{
+    if(r.dataset.word===current && !found.includes(current)){
+      found.push(current);
+      coins+=current.length*(r.dataset.bonus==="true"?2:1);
+      document.getElementById("coins").textContent=coins;
+      [...r.children].forEach((c,i)=>c.textContent=current[i]);
       save();
-      setTimeout(loadLevel,600);
     }
+  });
+
+  if(levels[level].main.every(w=>found.includes(w))){
+    level++; save(); setTimeout(loadLevel,600);
   }
+}
+
+function shuffleLetters(){
+  const letters=[...document.querySelectorAll(".letter")];
+  const pos=letters.map(l=>({l:l.style.left,t:l.style.top}));
+  pos.sort(()=>Math.random()-0.5);
+  letters.forEach((l,i)=>{l.style.left=pos[i].l; l.style.top=pos[i].t;});
+  reset();
 }
 
 function hint(){
   if(coins<5)return;
-  coins-=5;
+  coins-=5; save();
   document.getElementById("coins").textContent=coins;
-  save();
-  const row=[...document.querySelectorAll(".word")].find(r=>![...r.children].every(c=>c.textContent));
-  if(!row)return;
-  const i=[...row.children].findIndex(c=>!c.textContent);
-  row.children[i].textContent=row.dataset.word[i];
+  const r=[...document.querySelectorAll(".word")]
+    .find(r=>![...r.children].every(c=>c.textContent));
+  if(!r)return;
+  const i=[...r.children].findIndex(c=>!c.textContent);
+  r.children[i].textContent=r.dataset.word[i];
 }
 
-function openShop(){document.getElementById("shop").style.display="block";}
-function closeShop(){document.getElementById("shop").style.display="none";}
+function openShop(){shop.style.display="block";}
+function closeShop(){shop.style.display="none";}
 function buyNeon(){if(coins>=20){coins-=20;skin="neon";save();location.reload();}}
 function setSkin(s){skin=s;save();location.reload();}
 
 loadLevel();
 </script>
-
 </body>
 </html>
