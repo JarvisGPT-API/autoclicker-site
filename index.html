@@ -15,7 +15,6 @@ body {
 }
 
 h1 { margin: 15px; }
-
 #level { opacity: 0.7; }
 
 #current {
@@ -26,8 +25,8 @@ h1 { margin: 15px; }
 
 #circle {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 260px;
+  height: 260px;
   margin: 20px auto;
   border-radius: 50%;
   background: rgba(255,255,255,0.05);
@@ -61,7 +60,7 @@ button {
 #words {
   margin-top: 20px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
 }
 
@@ -100,9 +99,18 @@ button {
 
 <script>
 const levels = [
-  { letters: ["К","О","Т"], words: ["КОТ","ТОК"] },
-  { letters: ["Д","О","М"], words: ["ДОМ","МОД"] },
-  { letters: ["С","О","К"], words: ["СОК","КОС"] }
+  {
+    letters: ["К","О","М","А","Т"],
+    words: ["КОТ","ТОК","КОМА","МАТОК","КОМАТ"]
+  },
+  {
+    letters: ["Д","О","М","И","К"],
+    words: ["ДОМ","КОМ","МИД","ДОМИК","КОМИД"]
+  },
+  {
+    letters: ["С","Л","О","В","О"],
+    words: ["СЛОВО","ВОЛОС","СОВ","ЛОВ","СОЛО"]
+  }
 ];
 
 let level = 0;
@@ -126,11 +134,11 @@ function loadLevel() {
   const words = levels[level].words;
 
   // буквы по кругу
-  const radius = 80;
+  const radius = 100;
   letters.forEach((l, i) => {
     const angle = (2 * Math.PI / letters.length) * i;
-    const x = 110 + radius * Math.cos(angle) - 27;
-    const y = 110 + radius * Math.sin(angle) - 27;
+    const x = 130 + radius * Math.cos(angle) - 27;
+    const y = 130 + radius * Math.sin(angle) - 27;
 
     const btn = document.createElement("div");
     btn.className = "letter";
@@ -144,7 +152,7 @@ function loadLevel() {
     circle.appendChild(btn);
   });
 
-  // пустые квадраты слов
+  // пустые клетки слов
   words.forEach(word => {
     const row = document.createElement("div");
     row.className = "word";
@@ -174,8 +182,7 @@ function checkWord() {
   if (words.includes(current) && !found.includes(current)) {
     found.push(current);
 
-    const rows = document.querySelectorAll(".word");
-    rows.forEach(row => {
+    document.querySelectorAll(".word").forEach(row => {
       if (row.dataset.word === current) {
         [...row.children].forEach((cell, i) => {
           cell.textContent = current[i];
@@ -194,7 +201,7 @@ function checkWord() {
       } else {
         alert("🎉 Все уровни пройдены!");
       }
-    }, 600);
+    }, 700);
   }
 }
 
