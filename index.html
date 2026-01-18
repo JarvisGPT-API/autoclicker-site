@@ -15,12 +15,10 @@ body {
   touch-action: none;
 }
 
-h1 { margin: 10px; }
 #top {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
-  opacity: 0.9;
 }
 
 #current {
@@ -40,8 +38,8 @@ h1 { margin: 10px; }
 
 .letter {
   position: absolute;
-  width: 55px;
-  height: 55px;
+  width: 56px;
+  height: 56px;
   background: #2563eb;
   border-radius: 50%;
   display: flex;
@@ -54,7 +52,7 @@ h1 { margin: 10px; }
 
 .letter.active {
   background: #22c55e;
-  transform: scale(1.1);
+  transform: scale(1.15);
 }
 
 #words {
@@ -90,8 +88,6 @@ h1 { margin: 10px; }
   <div>Уровень <span id="level">1</span></div>
 </div>
 
-<h1>WOW</h1>
-
 <div id="current"></div>
 <div id="circle"></div>
 <div id="words"></div>
@@ -102,16 +98,15 @@ h1 { margin: 10px; }
 <script>
 const levels = [
   { letters:["К","О","Т"], words:["КОТ","ТОК"] },
-  { letters:["Д","О","М"], words:["ДОМ","МОД"] },
   { letters:["Л","Е","С","А"], words:["ЛЕС","ЛЕСА","СЕЛ"] }
 ];
 
 let level = 0;
+let coins = 0;
 let current = "";
 let found = [];
-let coins = 0;
-let activeLetters = [];
 let dragging = false;
+let used = new Set();
 
 const circle = document.getElementById("circle");
 const wordsDiv = document.getElementById("words");
@@ -122,11 +117,11 @@ const tapSound = document.getElementById("tapSound");
 const winSound = document.getElementById("winSound");
 
 function loadLevel() {
-  current = "";
-  found = [];
-  activeLetters = [];
   circle.innerHTML = "";
   wordsDiv.innerHTML = "";
+  current = "";
+  found = [];
+  used.clear();
   levelDiv.textContent = level + 1;
   updateCurrent();
 
@@ -135,24 +130,14 @@ function loadLevel() {
 
   letters.forEach((l, i) => {
     const angle = (2 * Math.PI / letters.length) * i;
-    const x = 130 + radius * Math.cos(angle) - 27;
-    const y = 130 + radius * Math.sin(angle) - 27;
+    const x = 130 + radius * Math.cos(angle) - 28;
+    const y = 130 + radius * Math.sin(angle) - 28;
 
     const el = document.createElement("div");
     el.className = "letter";
     el.textContent = l;
     el.style.left = x + "px";
     el.style.top = y + "px";
-
-    el.addEventListener("pointerdown", () => {
-      dragging = true;
-      selectLetter(el);
-    });
-
-    el.addEventListener("pointerenter", () => {
-      if (dragging) selectLetter(el);
-    });
-
     circle.appendChild(el);
   });
 
@@ -160,7 +145,6 @@ function loadLevel() {
     const row = document.createElement("div");
     row.className = "word";
     row.dataset.word = word;
-
     for (let i = 0; i < word.length; i++) {
       const cell = document.createElement("div");
       cell.className = "cell";
@@ -170,25 +154,50 @@ function loadLevel() {
   });
 }
 
+circle.addEventListener("pointerdown", e => {
+  dragging = true;
+  used.clear();
+  current = "";
+  updateCurrent();
+  checkTouch(e);
+});
+
+circle.addEventListener("pointermove", e => {
+  if (dragging) checkTouch(e);
+});
+
 document.addEventListener("pointerup", () => {
   dragging = false;
   checkWord();
   resetLetters();
 });
 
-function selectLetter(el) {
-  if (activeLetters.includes(el)) return;
-  activeLetters.push(el);
-  el.classList.add("active");
-  current += el.textContent;
-  tapSound.currentTime = 0;
-  tapSound.play();
-  updateCurrent();
+function checkTouch(e) {
+  document.querySelectorAll(".letter").forEach(el => {
+    if (used.has(el)) return;
+
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2;
+    const cy = r.top + r.height / 2;
+
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist < 30) {
+      used.add(el);
+      el.classList.add("active");
+      current += el.textContent;
+      tapSound.currentTime = 0;
+      tapSound.play();
+      updateCurrent();
+    }
+  });
 }
 
 function resetLetters() {
-  activeLetters.forEach(l => l.classList.remove("active"));
-  activeLetters = [];
+  document.querySelectorAll(".letter").forEach(l => l.classList.remove("active"));
+  used.clear();
   current = "";
   updateCurrent();
 }
@@ -220,7 +229,7 @@ function checkWord() {
       level++;
       if (level < levels.length) loadLevel();
       else alert("🎉 Все уровни пройдены!");
-    }, 800);
+    }, 700);
   }
 }
 
