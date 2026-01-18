@@ -1,143 +1,19 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WOW</title>
-
-<style>
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: radial-gradient(circle at top, #0b1a2a, #020617);
-  color: white;
-  text-align: center;
-  touch-action: none;
-}
-
-#top {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 20px;
-}
-
-#circle {
-  position: relative;
-  width: 260px;
-  height: 260px;
-  margin: 20px auto;
-}
-
-svg { position:absolute; inset:0; pointer-events:none; }
-
-.letter {
-  position:absolute;
-  width:56px; height:56px;
-  border-radius:50%;
-  background:#2563eb;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:26px;
-  font-weight:bold;
-}
-
-.neon .letter {
-  background:#a855f7;
-  box-shadow:0 0 15px #a855f7;
-}
-
-.letter.active {
-  background:#22c55e;
-  transform:scale(1.15);
-}
-
-#current { font-size:28px; min-height:40px; }
-
-#words {
-  display:grid;
-  gap:10px;
-  justify-content:center;
-}
-
-.word { display:flex; gap:6px; }
-
-.cell {
-  width:34px; height:40px;
-  border:2px solid rgba(255,255,255,.4);
-  border-radius:6px;
-  font-size:22px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-
-.bonus .cell { border-color:#facc15; }
-
-button {
-  margin:6px;
-  padding:10px 16px;
-  border-radius:10px;
-  border:none;
-  background:#22c55e;
-  color:white;
-}
-
-#shop {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.85);
-  padding-top:100px;
-}
-</style>
-</head>
-
-<body>
-
-<div id="top">
-  <div>💰 <span id="coins">0</span></div>
-  <div>Ур. <span id="level">1</span></div>
-</div>
-
-<div id="current"></div>
-
-<div id="circle"><svg id="lines"></svg></div>
-
-<button onclick="hint()">💡 Подсказка (5💰)</button>
-<button onclick="shuffleLetters()">🔄 Перемешать</button>
-<button onclick="openShop()">🛒 Магазин</button>
-
-<div id="words"></div>
-
-<div id="shop">
-  <h2>Магазин</h2>
-  <button onclick="setSkin('default')">🔵 Стандарт</button><br>
-  <button onclick="buyNeon()">🟣 Неон (20💰)</button><br><br>
-  <button onclick="closeShop()">Закрыть</button>
-</div>
-
 <script>
 // ✅ ТОЛЬКО СЛОВАРНЫЕ СЛОВА
 const baseLevels = [
-  { letters:["К","О","Т"], main:["КОТ"], bonus:["ТОК"] },
-  { letters:["Д","О","М"], main:["ДОМ"], bonus:["МОД"] },
-  { letters:["С","О","К"], main:["СОК"], bonus:["КОС"] },
-  { letters:["Л","Е","С"], main:["ЛЕС"], bonus:[] },
-  { letters:["М","И","Р"], main:["МИР"], bonus:["РИМ"] },
-
-  { letters:["Р","У","К","А"], main:["РУКА"], bonus:["КАР"] },
-  { letters:["С","Т","О","Л"], main:["СТОЛ"], bonus:[] },
-  { letters:["Г","О","Р","А"], main:["ГОРА"], bonus:["РОГ"] },
-  { letters:["Н","О","Г","А"], main:["НОГА"], bonus:[] },
-  { letters:["Т","Е","Л","О"], main:["ТЕЛО"], bonus:["ЛЕТ"] }
+  { letters:["К","О","Т","А"], main:["КОТ","ТОК","АТО","ОКА"] },
+  { letters:["Д","О","М","А"], main:["ДОМ","ОДА","МОА","МОД"] },
+  { letters:["Л","Е","С","А"], main:["ЛЕС","СЕЛ","АСЕ","САЛ"] },
+  { letters:["Р","У","К","А"], main:["РУКА","КАР","УРА","АРК"] },
+  { letters:["Н","О","Г","А"], main:["НОГА","ГОН","АНО","АГО"] }
 ];
 
-// 50 уровней
+// 🔁 50 уровней
 const levels=[];
 while(levels.length<50){
   baseLevels.forEach(l=>{
-    if(levels.length<50) levels.push(JSON.parse(JSON.stringify(l)));
+    if(levels.length<50)
+      levels.push(JSON.parse(JSON.stringify(l)));
   });
 }
 
@@ -160,6 +36,11 @@ function save(){
   localStorage.skin=skin;
 }
 
+// 🔢 сколько обязательных слов
+function requiredCount(){
+  return level < 9 ? 3 : 5;
+}
+
 function loadLevel(){
   circle.querySelectorAll(".letter").forEach(e=>e.remove());
   wordsDiv.innerHTML="";
@@ -180,8 +61,10 @@ function loadLevel(){
     circle.appendChild(d);
   });
 
-  levels[level].main.forEach(w=>addWord(w,false));
-  levels[level].bonus.forEach(w=>addWord(w,true));
+  const req = requiredCount();
+  levels[level].main.forEach((w,i)=>{
+    addWord(w, i >= req); // первые req — обязательные
+  });
 }
 
 function addWord(w,bonus){
@@ -241,8 +124,14 @@ function checkWord(){
     }
   });
 
-  if(levels[level].main.every(w=>found.includes(w))){
-    level++; save(); setTimeout(loadLevel,600);
+  const requiredSolved =
+    [...document.querySelectorAll(".word")]
+      .filter(r=>r.dataset.bonus!=="true")
+      .every(r=>found.includes(r.dataset.word));
+
+  if(requiredSolved){
+    level++; save();
+    setTimeout(loadLevel,600);
   }
 }
 
@@ -250,7 +139,10 @@ function shuffleLetters(){
   const letters=[...document.querySelectorAll(".letter")];
   const pos=letters.map(l=>({l:l.style.left,t:l.style.top}));
   pos.sort(()=>Math.random()-0.5);
-  letters.forEach((l,i)=>{l.style.left=pos[i].l; l.style.top=pos[i].t;});
+  letters.forEach((l,i)=>{
+    l.style.left=pos[i].l;
+    l.style.top=pos[i].t;
+  });
   reset();
 }
 
@@ -272,5 +164,3 @@ function setSkin(s){skin=s;save();location.reload();}
 
 loadLevel();
 </script>
-</body>
-</html>
