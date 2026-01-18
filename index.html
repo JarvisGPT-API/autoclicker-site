@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Iron Evolution</title>
+<title>WOW — Слова</title>
 
 <style>
 body {
@@ -14,204 +14,170 @@ body {
   text-align: center;
 }
 
-header {
-  padding: 15px;
+h1 {
+  margin: 15px;
+}
+
+#level {
+  opacity: 0.7;
+}
+
+#current {
+  font-size: 28px;
+  min-height: 40px;
+  margin: 15px;
+}
+
+#circle {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  margin: 20px auto;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.05);
+}
+
+.letter {
+  position: absolute;
+  width: 55px;
+  height: 55px;
+  background: #2563eb;
+  border-radius: 50%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
 }
 
 button {
-  background: #2563eb;
+  background: #22c55e;
   border: none;
-  color: white;
-  padding: 14px;
+  padding: 14px 20px;
   border-radius: 14px;
   font-size: 16px;
+  color: white;
   margin: 8px;
-  width: 90%;
 }
 
-#hero {
-  margin: 30px auto;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle at center, #c7a46a 35%, #3b2f1e 70%);
-  position: relative;
-  box-shadow: 0 0 40px #111;
-  transition: 0.2s;
+#words {
+  margin-top: 20px;
 }
 
-.armored {
-  background: radial-gradient(circle at center, #ffd54a 35%, #b91c1c 70%);
-  box-shadow: 0 0 40px #dc2626;
+.word {
+  font-size: 22px;
+  opacity: 0.3;
 }
 
-.eye {
-  position: absolute;
-  top: 80px;
-  width: 30px;
-  height: 14px;
-  background: cyan;
-  border-radius: 10px;
-  box-shadow: 0 0 15px cyan;
-}
-
-.eye.left { left: 60px; }
-.eye.right { right: 60px; }
-
-#reactor {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: cyan;
-  box-shadow: 0 0 20px cyan;
-  display: none;
-}
-
-#hero.armored #reactor {
-  display: block;
-}
-
-#hero:active {
-  transform: scale(0.95);
-}
-
-.section {
-  margin-top: 25px;
+.word.found {
+  opacity: 1;
+  color: #22c55e;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-  <div>Iron Evolution</div>
-  <button style="width:auto">RU / EN</button>
-</header>
+<h1>WOW — Отгадай слова</h1>
+<div id="level">Уровень: 1</div>
 
-<div>⚡ Энергия: <span id="energy">0</span></div>
-<div>💰 Доход: <span id="income">1</span>/сек</div>
+<div id="current"></div>
 
-<div id="hero" onclick="tap()">
-  <div class="eye left"></div>
-  <div class="eye right"></div>
-  <div id="reactor"></div>
-</div>
+<div id="circle"></div>
 
-<button id="tapBtn" onclick="upgradeTap()"></button>
-<button onclick="upgradeIncome()">Базовый доход +1 — 185</button>
+<button onclick="checkWord()">Проверить</button>
+<button onclick="clearWord()">Очистить</button>
 
-<div class="section">
-  <h3>Магазин костюма</h3>
-  <button onclick="buyHelmet()">🔩 Шлем — <span id="helmet">Не куплено</span></button>
-  <button onclick="buyArms()">🦾 Руки — <span id="arms">Не куплено</span></button>
-  <button onclick="buyLegs()">🦿 Ноги — <span id="legs">Не куплено</span></button>
-</div>
+<div id="words"></div>
 
 <script>
-let energy = Number(localStorage.energy) || 0;
-let tapPower = Number(localStorage.tapPower) || 1;
-let income = Number(localStorage.income) || 1;
+const levels = [
+  { letters: ["К","О","Т"], words: ["КОТ","ТОК"] },
+  { letters: ["Д","О","М"], words: ["ДОМ","МОД"] },
+  { letters: ["С","О","К"], words: ["СОК","КОС"] }
+];
 
-let tapCost = Number(localStorage.tapCost) || 50;
+let level = 0;
+let current = "";
+let found = [];
 
-let helmet = localStorage.helmet === "true";
-let arms = localStorage.arms === "true";
-let legs = localStorage.legs === "true";
+const levelDiv = document.getElementById("level");
+const currentDiv = document.getElementById("current");
+const circle = document.getElementById("circle");
+const wordsDiv = document.getElementById("words");
 
-const energyEl = document.getElementById("energy");
-const incomeEl = document.getElementById("income");
-const tapBtn = document.getElementById("tapBtn");
-const hero = document.getElementById("hero");
+function loadLevel() {
+  current = "";
+  found = [];
+  circle.innerHTML = "";
+  wordsDiv.innerHTML = "";
+  levelDiv.textContent = "Уровень: " + (level + 1);
+  updateCurrent();
 
-function save() {
-  localStorage.energy = energy;
-  localStorage.tapPower = tapPower;
-  localStorage.income = income;
-  localStorage.tapCost = tapCost;
-  localStorage.helmet = helmet;
-  localStorage.arms = arms;
-  localStorage.legs = legs;
+  const letters = levels[level].letters;
+  const words = levels[level].words;
+
+  const radius = 80;
+  letters.forEach((l, i) => {
+    const angle = (2 * Math.PI / letters.length) * i;
+    const x = 110 + radius * Math.cos(angle) - 27;
+    const y = 110 + radius * Math.sin(angle) - 27;
+
+    const btn = document.createElement("div");
+    btn.className = "letter";
+    btn.style.left = x + "px";
+    btn.style.top = y + "px";
+    btn.textContent = l;
+    btn.onclick = () => {
+      current += l;
+      updateCurrent();
+    };
+    circle.appendChild(btn);
+  });
+
+  words.forEach(w => {
+    const div = document.createElement("div");
+    div.className = "word";
+    div.id = "word-" + w;
+    div.textContent = w;
+    wordsDiv.appendChild(div);
+  });
 }
 
-function updateUI() {
-  energyEl.textContent = energy;
-  incomeEl.textContent = income;
-  tapBtn.textContent = `Усилить тап (+1) — ${tapCost}`;
+function updateCurrent() {
+  currentDiv.textContent = current;
+}
 
-  document.getElementById("helmet").textContent = helmet ? "Куплено" : "100";
-  document.getElementById("arms").textContent = arms ? "Куплено" : "150";
-  document.getElementById("legs").textContent = legs ? "Куплено" : "200";
+function clearWord() {
+  current = "";
+  updateCurrent();
+}
 
-  if (helmet && arms && legs) {
-    hero.classList.add("armored");
+function checkWord() {
+  const words = levels[level].words;
+  if (words.includes(current) && !found.includes(current)) {
+    found.push(current);
+    document.getElementById("word-" + current).classList.add("found");
   }
 
-  save();
-}
+  clearWord();
 
-function tap() {
-  energy += tapPower;
-  updateUI();
-}
-
-function upgradeTap() {
-  if (energy >= tapCost) {
-    energy -= tapCost;
-    tapPower++;
-    tapCost += 10;
-    updateUI();
-  }
-}
-
-function upgradeIncome() {
-  if (energy >= 185) {
-    energy -= 185;
-    income++;
-    updateUI();
-  }
-}
-
-function buyHelmet() {
-  if (!helmet && energy >= 100) {
-    energy -= 100;
-    helmet = true;
-    income += 1;
-    updateUI();
-  }
-}
-
-function buyArms() {
-  if (!arms && energy >= 150) {
-    energy -= 150;
-    arms = true;
-    tapPower += 2;
-    updateUI();
-  }
-}
-
-function buyLegs() {
-  if (!legs && energy >= 200) {
-    energy -= 200;
-    legs = true;
-    income += 2;
-    updateUI();
+  if (found.length === words.length) {
+    setTimeout(() => {
+      level++;
+      if (level < levels.length) {
+        loadLevel();
+      } else {
+        alert("🎉 Все уровни пройдены!");
+      }
+    }, 600);
   }
 }
 
-setInterval(() => {
-  energy += income;
-  updateUI();
-}, 1000);
-
-updateUI();
+loadLevel();
 </script>
 
 </body>
-  </html>
+</html>
